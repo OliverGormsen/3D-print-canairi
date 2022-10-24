@@ -1,24 +1,19 @@
-
-// --------------------------- moving average
-
 #include <movingAvg.h>  
-movingAvg avgECO2(60); 
-
-// --------------------------- define stepper
 #include <Stepper.h>
-
-const int stepsPerRevolution = 512;  // change this to fit the number of steps per revolution for your motor
-
-// initialize the stepper library on pins
-Stepper myStepper(stepsPerRevolution, 2, 3, 4, 5);
-
-
-//  --------------------------- define for CO2 sencor
-
 #include <Wire.h>
 #include "Adafruit_SGP30.h"
 
+// Initialize movingAvg lib
+movingAvg avgECO2(60); 
+
+// Define stepper
+const int stepsPerRevolution = 512;  // change this to fit the number of steps per revolution for your motor
+// initialize the stepper library on pins
+Stepper myStepper(stepsPerRevolution, 2, 3, 4, 5);
+
+// CO2 sensor reference
 Adafruit_SGP30 sgp;
+
 
 /* return absolute humidity [mg/m^3] with approximation formula
 * @param temperature [°C]
@@ -31,14 +26,12 @@ uint32_t getAbsoluteHumidity(float temperature, float humidity) {
     return absoluteHumidityScaled;
 }
 
-// --------------------------------setup start --------------------------
 void setup() {
 
-  //--------------moving avg setup
-
+  // Moving avg setup
   avgECO2.begin();
   
-  //--------------CO2 sencor setup
+  // CO2 sensor setup
   Serial.begin(115200);
   while (!Serial) { delay(10); } // Wait for serial console to open!
 
@@ -57,29 +50,23 @@ void setup() {
   // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
   //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
 
-   //--------------stepper setup
-   myStepper.setSpeed(60);
+  myStepper.setSpeed(60);
 }
 
-//generic counters and booleans
+// global variables
 int counter = 0;
 int baseLineCounter = 0;
 int calAVG = 0;
 bool birdUP = true;
-int tenSec = 10000;
-int oneMinute = 60000;
+const int TEN_SEC = 10000;
 
-
-
-// ---------------------------loop start -------------------------------
 void loop() {
   // If you have a temperature / humidity sensor, you can set the absolute humidity to enable the humditiy compensation for the air quality signals
   //float temperature = 22.1; // [°C]
   //float humidity = 45.2; // [%RH]
   //sgp.setHumidity(getAbsoluteHumidity(temperature, humidity));
 
-
-  if (! sgp.IAQmeasure()) {
+  if (!sgp.IAQmeasure()) {
       Serial.println("Measurement failed");
       return;
     }
@@ -88,19 +75,16 @@ void loop() {
   Serial.println(sgp.eCO2);
   //Serial.print(\);
 
-  if (! sgp.IAQmeasureRaw()) {
+  if (!sgp.IAQmeasureRaw()) {
     Serial.println("Raw Measurement failed");
     return;
   }
-
 
   counter++; 
   baseLineCounter++;
   //+1 per 10 sec
 
-//----------------------------- calculating baseline values 
-// ---------------------------- (read page 19 in the .pdf guide to see how this is done)
-
+  // Calculating baseline values (read page 19 in the .pdf guide to see how this is done)
   if (baseLineCounter >= 59) {
     baseLineCounter = 0;
 
@@ -115,12 +99,12 @@ void loop() {
         Serial.println("Failed to get baseline readings");
         return;
       }
-   Serial.print("****Baseline values: eCO2: 0x"); Serial.print(eCO2_base, HEX);
-   Serial.print(" & TVOC: 0x"); Serial.println(TVOC_base, HEX);
+    Serial.print("****Baseline values: eCO2: 0x"); Serial.print(eCO2_base, HEX);
+    Serial.print(" & TVOC: 0x"); Serial.println(TVOC_base, HEX);
   }
   
-// ---------------------avg calculating  + plotting
 
+  // avg calculating  + plotting
   
   //for calculating running avarage
   int eCO2Val = sgp.eCO2;
@@ -147,9 +131,7 @@ void loop() {
       birdUP = !birdUP;
       Serial.print("Bird up");
     }
-    }  
+  }  
   
-
-
-delay(tenSec);     //loop delay
-} // ------------------------------ loop end
+  delay(TEN_SECONDS); // Loop delay
+}
