@@ -1,4 +1,3 @@
-
 // --------------------------- moving average
 
 #include <movingAvg.h>  
@@ -13,7 +12,7 @@ const int stepsPerRevolution = 512;  // change this to fit the number of steps p
 Stepper myStepper(stepsPerRevolution, 2, 3, 4, 5);
 
 
-//  --------------------------- define for CO2 sencor
+//  --------------------------- define for CO2 sensor
 
 #include <Wire.h>
 #include "Adafruit_SGP30.h"
@@ -35,10 +34,9 @@ uint32_t getAbsoluteHumidity(float temperature, float humidity) {
 void setup() {
 
   //--------------moving avg setup
-
   avgECO2.begin();
   
-  //--------------CO2 sencor setup
+  //--------------CO2 sensor setup
   Serial.begin(115200);
   while (!Serial) { delay(10); } // Wait for serial console to open!
 
@@ -57,18 +55,16 @@ void setup() {
   // If you have a baseline measurement from before you can assign it to start, to 'self-calibrate'
   //sgp.setIAQBaseline(0x8E68, 0x8F41);  // Will vary for each sensor!
 
-   //--------------stepper setup
-   myStepper.setSpeed(60);
+  //--------------stepper setup
+  myStepper.setSpeed(60);
 }
 
-//generic counters and booleans
+// global variables
 int counter = 0;
 int baseLineCounter = 0;
 int calAVG = 0;
 bool birdUP = true;
-int tenSec = 10000;
-int oneMinute = 60000;
-
+const int TEN_SEC = 10000;
 
 
 // ---------------------------loop start -------------------------------
@@ -98,8 +94,8 @@ void loop() {
   baseLineCounter++;
   //+1 per 10 sec
 
-//----------------------------- calculating baseline values 
-// ---------------------------- (read page 19 in the .pdf guide to see how this is done)
+  //----------------------------- calculating baseline values 
+  // ---------------------------- (read page 19 in the .pdf guide to see how this is done)
 
   if (baseLineCounter >= 59) {
     baseLineCounter = 0;
@@ -115,12 +111,11 @@ void loop() {
         Serial.println("Failed to get baseline readings");
         return;
       }
-   Serial.print("****Baseline values: eCO2: 0x"); Serial.print(eCO2_base, HEX);
-   Serial.print(" & TVOC: 0x"); Serial.println(TVOC_base, HEX);
+    Serial.print("****Baseline values: eCO2: 0x"); Serial.print(eCO2_base, HEX);
+    Serial.print(" & TVOC: 0x"); Serial.println(TVOC_base, HEX);
   }
   
-// ---------------------avg calculating  + plotting
-
+  // ---------------------avg calculating  + plotting
   
   //for calculating running avarage
   int eCO2Val = sgp.eCO2;
@@ -147,9 +142,7 @@ void loop() {
       birdUP = !birdUP;
       Serial.print("Bird up");
     }
-    }  
+  }  
   
-
-
-delay(tenSec);     //loop delay
+  delay(TEN_SECONDS); //loop delay
 } // ------------------------------ loop end
